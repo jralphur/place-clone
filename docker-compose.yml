@@ -1,0 +1,54 @@
+networks:
+  place-network:
+    driver: bridge
+services:
+  frontend:
+    image: node:latest
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - 3000:3000
+    working_dir: /frontend
+    volumes:
+      - ./frontend:/frontend
+    depends_on:
+      - backend
+    networks:
+      - place-network
+  backend:
+    image: node:latest
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - 8000:8000
+    environment:
+      - PORT=8000
+      - SECRET="SECRET"
+    working_dir: /backend
+    volumes:
+      - ./backend/http:/backend
+      - /backend/node_modules/
+    networks:
+      - place-network
+    depends_on:
+      - cassandra
+      - redis
+  redis:
+    image: place-redis:latest
+    command: sh -c "redis-server redis.conf"
+    ports:
+      - 6379:6379
+    networks:
+      - place-network
+  cassandra:
+    image: cassandra:latest
+    working_dir: /cassandra
+    volumes:
+      - place-cassandra-db:/var/lib/cassandra
+    environment:
+      - CASSANDRA_START_RPC=true
+    ports:
+      - 9042:9042
+    networks:
+      - place-network
+  
+volumes:
+  place-cassandra-db:  

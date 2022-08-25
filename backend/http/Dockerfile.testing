@@ -1,0 +1,7 @@
+FROM node:latest
+WORKDIR /app
+ENV NODE_ENV="test"
+COPY ["package.json", "package-lock.json", "./"]
+RUN npm install
+COPY . .
+CMD [ "npm", "start" ]
