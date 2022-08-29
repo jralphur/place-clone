@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from "@vue/reactivity";
 import { onMounted, onUnmounted, onUpdated, ref } from "vue";
-import client from "../remote/socket";
 import type { Point } from "../types";
 
 const props = defineProps<{
@@ -14,11 +13,6 @@ const emit = defineEmits<{
 }>();
 
 const pan = ref<Point>({
-  x: 0,
-  y: 0,
-});
-
-const testPan = ref<Point>({
   x: 0,
   y: 0,
 });
@@ -42,7 +36,7 @@ const clamp = (min: number, max: number, value: number): number => {
   return value;
 };
 
-const snapPixel = (pos: Point) => {
+const snapPixel = (pos: Point = pan.value) => {
   const cl = (v: number, d: number) =>
     clamp(-scale.value * d, scale.value * d - scale.value, v);
   const scaled = ({ x, y }: Point) => ({
@@ -80,7 +74,8 @@ const scaleView = (event: WheelEvent) => {
     pan.value.x = pan.value.x * p;
     zoom.value = z;
   }
-  snapPixel(pan.value);
+
+  snapPixel();
 };
 
 // because of the flex rules placing the canvas at the center, we'll call the origin
@@ -109,24 +104,19 @@ const mousePan = (event: MouseEvent) => {
   if (isPanning) {
     const bound = scale.value * (props.boardDimensions.x / 2);
 
-    let newx = clamp(
-      -bound,
-      bound - scale.value,
-      pan.value.x + screenX - lastPanPosition.x
-    );
+    let newx = clamp(-bound, bound, pan.value.x + screenX - lastPanPosition.x);
 
-    let newy = clamp(
-      -bound,
-      bound - scale.value,
-      pan.value.y + screenY - lastPanPosition.y
-    );
+    let newy = clamp(-bound, bound, pan.value.y + screenY - lastPanPosition.y);
 
     const n = {
       x: newx,
       y: newy,
     };
 
-    emit("targetpos", { x: n.x - pan.value.x, y: n.y - pan.value.y });
+    emit("targetpos", {
+      x: props.boardDimensions.x / 2 - n.x / scale.value,
+      y: props.boardDimensions.y / 2 - n.y / scale.value,
+    });
     snapPixel(n);
     lastPanPosition = { x: screenX, y: screenY };
   }
@@ -138,35 +128,47 @@ const releaseKey = (event: KeyboardEvent) => {
 };
 
 const keyPan = (event: KeyboardEvent) => {
-  // TODO: support click and drag pan
+  // todo: add zoom support
   event.stopPropagation();
   loggedKeys.add(event.code);
-  const step = 5;
+  const step = 1 * scale.value;
   let t = { ...pan.value };
   const bound = (scale.value * props.boardDimensions.x) / 2;
 
   if (loggedKeys.has("ArrowUp") && pan.value.y < bound) {
-    t.y += step;
-    emit("targetpos", { ...props.pan, y: props.pan.y + step });
+    t.y = Math.min(bound, t.y + step);
+    emit("targetpos", {
+      ...props.pan,
+      y: Math.min(props.boardDimensions.y / 2, props.pan.y + 1),
+    });
   }
 
   if (loggedKeys.has("ArrowDown") && pan.value.y > -bound) {
-    t.y -= step;
-    emit("targetpos", { ...props.pan, y: props.pan.y - step });
+    t.y = Math.max(-bound, t.y - step);
+    emit("targetpos", {
+      ...props.pan,
+      y: Math.min(-(props.boardDimensions.y / 2), props.pan.y - 1),
+    });
   }
 
   if (loggedKeys.has("ArrowRight") && pan.value.x > -bound) {
-    t.x -= step;
-    emit("targetpos", { ...props.pan, x: props.pan.x - step });
+    t.x = Math.max(-bound, t.x - step);
+    emit("targetpos", {
+      ...props.pan,
+      x: Math.min(-(props.boardDimensions.x / 2), props.pan.x - 1),
+    });
   }
 
   if (loggedKeys.has("ArrowLeft") && pan.value.x < bound) {
-    t.x += step;
-    emit("targetpos", { ...props.pan, x: props.pan.x + step });
+    t.x = Math.max(bound, t.x + step);
+    emit("targetpos", {
+      ...props.pan,
+      x: Math.min(props.boardDimensions.x / 2, props.pan.x + 1),
+    });
   }
 
-  // snapPixel(t);
   pan.value = t;
+  snapPixel();
 };
 
 const clickUp = () => {
@@ -174,19 +176,29 @@ const clickUp = () => {
 };
 
 // center point is origin
-const focusPixel = (event: MouseEvent) => {
+const focusPixelOnClick = (event: MouseEvent) => {
   if (
     event.target &&
     (event.target as HTMLElement).id === "canvas" &&
     !isPanning
   ) {
     const rect = (event.target as HTMLElement).getBoundingClientRect();
-    console.log(
-      "x:",
-      -(event.clientX - rect.left - props.boardDimensions.x / 2),
-      "y:",
-      -(event.clientY - rect.top - props.boardDimensions.y / 2)
-    );
+    pan.value = {
+      x: -(
+        event.clientX -
+        rect.left -
+        (props.boardDimensions.x * scale.value) / 2
+      ),
+      y: -(
+        event.clientY -
+        rect.top -
+        (props.boardDimensions.y * scale.value) / 2
+      ),
+    };
+    emit("targetpos", {
+      x: Math.floor(props.boardDimensions.x / 2 - pan.value.x / scale.value),
+      y: Math.floor(props.boardDimensions.y / 2 - pan.value.y / scale.value),
+    });
   }
 };
 
@@ -222,7 +234,7 @@ onUnmounted(() => {
     @mouseup="clickUp"
     @mousemove="mousePan"
     @mouseleave="clickUp"
-    @click="focusPixel"
+    @click="focusPixelOnClick"
     @wheel="scaleView"
   >
     <div
