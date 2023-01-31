@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
-import PlaceCamera from "./PlaceCamera.vue";
+import PlaceDisplay from "./PlaceDisplay.vue";
 import LoginModal from "./LoginModal.vue";
 import PlacePanel from "./PlacePanel.vue";
 import type {
@@ -11,47 +11,40 @@ import type {
 } from "../types";
 import user from "../remote/backend/user";
 import token from "../remote/backend/token";
-import { getBoard, putTile } from "../remote/backend/board";
+import { getBoard } from "../remote/backend/board";
 import type PlaceBoard from "../types/PlaceBoard";
-import { fromInt32 } from "../types/RGBA";
 import { htmlColors } from "../types";
+import { getBackgroundColorCSS } from "../utils/rgba";
 const error = ref<Error | null>(null);
 const criticalError = ref<Error | null>(null);
 
 const activeColor = ref<PlaceColorName>("WHITE");
 const isLoading = ref<boolean>(true);
 const displayLogin = ref<boolean>(false);
-const canvas = ref<InstanceType<typeof HTMLCanvasElement> | null>(null);
+// const canvas = ref<InstanceType<typeof HTMLCanvasElement> | null>(null);
 
 const place = ref<PlaceBoard | null>(null);
 const targetPos = ref<Point | null>(null);
+const rgbaColor = ref<string>(
+  getBackgroundColorCSS(htmlColors[activeColor.value])
+);
+watch(
+  activeColor,
+  () => (rgbaColor.value = getBackgroundColorCSS(htmlColors[activeColor.value]))
+);
 
 const setActiveColor = (color: PlaceColorName) => {
   console.log("setting color to", color);
   activeColor.value = color;
 };
 
-// const canvasClick = (event: MouseEvent) => {
-//   // TODO: handle scale changes
-//   if (canvas.value && place.value) {
-//     console.log("canvas click");
-//   }
-// };
-
-watch([canvas, place], () => {
-  if (canvas.value && place.value) {
-    const context = canvas.value.getContext("2d") as CanvasRenderingContext2D;
-    context.putImageData(place.value.board, 0, 0);
-  }
-});
-
 onMounted(async () => {
   try {
     isLoading.value = true;
     place.value = await getBoard();
     targetPos.value = {
-      x: place.value.width() / 2 - 1,
-      y: place.value.height() / 2 - 1,
+      x: place.value.width() / 2,
+      y: place.value.height() / 2,
     };
   } catch (e) {
     if (e instanceof Error) {
@@ -99,9 +92,12 @@ const placePixel = async (e: MouseEvent) => {
   // }
 };
 
-const getBackgroundColorCSS = (color: number): string => {
-  const { red, green, blue, alpha } = fromInt32(color);
-  return `rgba(${red},${green},${blue},${alpha})`;
+const setTargetPos = (point: Point) => {
+  if (targetPos.value !== null && place.value !== null) {
+    targetPos.value = {
+      ...point,
+    };
+  }
 };
 </script>
 
@@ -113,7 +109,7 @@ const getBackgroundColorCSS = (color: number): string => {
     <div
       @click="closeLogin"
       v-if="displayLogin"
-      class="absolute h-screen w-screen bg-black/20 flex items-center justify-center place-items-center"
+      class="absolute h-screen w-screen bg-black/20"
     >
       <LoginModal
         :handle-login="handleLogin"
@@ -127,21 +123,15 @@ const getBackgroundColorCSS = (color: number): string => {
       Login
     </div>
     <div class="bg-slate-300 overflow-clip h-screen w-screen">
-      <PlaceCamera
-        :board-dimensions="{ x: place.width(), y: place.height() }"
-        :pan="targetPos"
-        @targetpos="(p: Point) => (targetPos = p)"
-      >
-        <div class="scale40x">
-          <canvas
-            class=""
-            ref="canvas"
-            id="canvas"
-            height="1000"
-            width="1000"
-          ></canvas>
-        </div>
-      </PlaceCamera>
+      <div class="absolute inset-0">
+        <PlaceDisplay
+          :board-dimensions="{ x: place.width(), y: place.height() }"
+          :rgba-color="rgbaColor"
+          :target-pos="targetPos"
+          :place="place"
+          @set-pos="setTargetPos"
+        />
+      </div>
       <div
         class="absolute w-11/12 flex flex-col justify-center items-center bottom-4 inset-x-0 ml-auto mr-auto pointer-events-auto"
       >
@@ -157,7 +147,8 @@ const getBackgroundColorCSS = (color: number): string => {
           <button @click="placePixel" class="items-center">Place</button>
         </div>
         <div class="w-full bg-slate-300 px-2 rounded-lg shadow-lg">
-          <PlacePanel @setcolor="setActiveColor" :active-color="activeColor" />
+          <PlacePanel @setcolor="setActiveColor" :rgba-color="rgbaColor" />
+          <!-- <div>{{ targetPos.x }} {{ targetPos.y }}</div> -->
         </div>
       </div>
     </div>
