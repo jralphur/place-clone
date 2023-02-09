@@ -109,8 +109,8 @@ const mousePan = (event: MouseEvent) => {
       y: screenY - startPanPos.y,
     }) > scale.value;
   if (isPanning) {
-    let newx = cssPan.value.x + screenX - lastPanPosition.x;
-    let newy = cssPan.value.y + screenY - lastPanPosition.y;
+    const newx = cssPan.value.x + screenX - lastPanPosition.x;
+    const newy = cssPan.value.y + screenY - lastPanPosition.y;
 
     cssPan.value = { x: newx, y: newy };
     lastPanPosition = { x: screenX, y: screenY };
@@ -126,7 +126,7 @@ const keyPan = (event: KeyboardEvent) => {
   // todo: add zoom support
   event.stopPropagation();
   loggedKeys.add(event.code);
-  let prevStep = { ...cssPan.value };
+  const prevStep = { ...cssPan.value };
 
   if (loggedKeys.has("ArrowUp")) {
     prevStep.y = prevStep.y - scale.value;
@@ -209,17 +209,6 @@ onUpdated(() => {
     @mouseleave="clickUp"
     @mousemove="mousePan"
   >
-    <!-- <div
-      class=""
-      :style="{
-        transform: `translate(${cssPan.x}px, ${cssPan.y}px)`,
-        // transformOrigin: `${transformOrigin.x}px ${transformOrigin.y}px`,
-        height: `${displayDimensions.x}px`,
-        width: `${displayDimensions.y}px`,
-      }"
-      id="place-pan-wrapper"
-      ref="scaleWrapper"
-    > -->
     <div
       :style="{
         translate: `${cssPan.x}px ${cssPan.y}px`,
@@ -261,15 +250,5 @@ onUpdated(() => {
         ></canvas>
       </div>
     </div>
-    <!-- <font-awesome-icon
-        icon="fa-solid fa-compress"
-        class="absolute top-0 left-0 w-px h-px origin-center text-black/30"
-        :style="{
-          transform: `translate(${props.boardDimensions.x / 2 - pan.x}px,
-           ${props.boardDimensions.y / 2 - pan.y}px) 
-           scale(${scale * 1.5})`,
-        }"
-      ></font-awesome-icon> -->
-    <!-- </div> -->
   </div>
 </template>

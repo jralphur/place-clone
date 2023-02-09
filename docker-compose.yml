@@ -6,7 +6,7 @@ services:
     image: node:latest
     command: sh -c "npm install && npm run dev"
     ports:
-      - 3000:3000
+      - 5173:5173
     working_dir: /frontend
     volumes:
       - ./frontend:/frontend
@@ -20,12 +20,11 @@ services:
     ports:
       - 8000:8000
     environment:
-      - PORT=8000
-      - SECRET="SECRET"
-    working_dir: /backend
+      PORT: "8000"
+      SECRET: "SECRET"
+    working_dir: /backend/http
     volumes:
-      - ./backend/http:/backend
-      - /backend/node_modules/
+        - ./backend/http:/backend/http
     networks:
       - place-network
     depends_on:
@@ -44,7 +43,7 @@ services:
     volumes:
       - place-cassandra-db:/var/lib/cassandra
     environment:
-      - CASSANDRA_START_RPC=true
+      CASSANDRA_START_RPC: "true"
     ports:
       - 9042:9042
     networks:
