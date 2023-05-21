@@ -2,6 +2,7 @@
 import { onMounted, onUpdated, ref, watch } from "vue";
 import type { Point } from "../types";
 import type PlaceBoard from "../types/PlaceBoard";
+import TargetPixel from "./TargetPixel.vue";
 
 const props = defineProps<{
   boardDimensions: Point;
@@ -186,6 +187,7 @@ const draw = () => {
   }
 };
 
+// maybe do not need this
 watch([canvas, scale], () => {
   draw();
 });
@@ -195,6 +197,7 @@ onMounted(() => {
   draw();
 });
 
+// maybe do not need this
 onUpdated(() => {
   draw();
 });
@@ -229,17 +232,11 @@ onUpdated(() => {
         ref="scaleWrapper"
         @wheel="zoomEvent"
       >
-        <div
-          v-if="scale >= 1"
-          class="absolute top-0 left-0"
-          :style="{
-            height: `${scale}px`,
-            width: `${scale}px`,
-            transform: `scale(${scale})`,
-            translate: `${targetPos.x}px ${targetPos.y}px`,
-            backgroundColor: `${rgbaColor}`,
-          }"
-        ></div>
+        <TargetPixel
+          :scale="scale"
+          :translate="targetPos"
+          :rgba-color="rgbaColor"
+        />
         <canvas
           tabindex="0"
           class=""
