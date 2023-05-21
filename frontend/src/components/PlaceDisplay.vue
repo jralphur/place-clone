@@ -14,15 +14,9 @@ const emit = defineEmits<{
   (e: "setPos", point: Point): void;
 }>();
 
-const cssPan = ref<Point>({
-  x: 0,
-  y: 0,
-});
-
 const scale = ref(0.75);
 const wrapper = ref<InstanceType<typeof HTMLDivElement> | null>(null);
 const scaleWrapper = ref<InstanceType<typeof HTMLDivElement> | null>(null);
-const panWrapper = ref<InstanceType<typeof HTMLDivElement> | null>(null);
 const canvas = ref<InstanceType<typeof HTMLCanvasElement> | null>(null);
 
 const transformOrigin = ref<Point>({
@@ -47,6 +41,7 @@ const magnitude = (vec: { x: number; y: number }) => {
 };
 
 const scaleView = (focusX: number, focusY: number, target: number) => {
+  console.log(`scaleView(${focusX}, ${focusY}, ${target})`);
   const x = focusX - (props.boardDimensions.x * scale.value) / 2;
   const y = focusY - (props.boardDimensions.y * scale.value) / 2;
   const zoom = clamp(0.75, 2.0, target);
@@ -109,10 +104,10 @@ const mousePan = (event: MouseEvent) => {
       y: screenY - startPanPos.y,
     }) > scale.value;
   if (isPanning) {
-    const newx = cssPan.value.x + screenX - lastPanPosition.x;
-    const newy = cssPan.value.y + screenY - lastPanPosition.y;
+    const newx = transformOrigin.value.x + screenX - lastPanPosition.x;
+    const newy = transformOrigin.value.y + screenY - lastPanPosition.y;
 
-    cssPan.value = { x: newx, y: newy };
+    transformOrigin.value = { x: newx, y: newy };
     lastPanPosition = { x: screenX, y: screenY };
   }
 };
@@ -126,7 +121,7 @@ const keyPan = (event: KeyboardEvent) => {
   // todo: add zoom support
   event.stopPropagation();
   loggedKeys.add(event.code);
-  const prevStep = { ...cssPan.value };
+  const prevStep = { ...transformOrigin.value };
 
   if (loggedKeys.has("ArrowUp")) {
     prevStep.y = prevStep.y - scale.value;
@@ -144,7 +139,7 @@ const keyPan = (event: KeyboardEvent) => {
     prevStep.x = prevStep.x - scale.value;
   }
 
-  cssPan.value = prevStep;
+  transformOrigin.value = prevStep;
 };
 
 const clickUp = () => {
@@ -162,9 +157,9 @@ const focusPixelOnClick = (event: MouseEvent) => {
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    cssPan.value = {
-      x: x - (props.boardDimensions.x * scale.value) / 2,
-      y: y - (props.boardDimensions.y * scale.value) / 2,
+    transformOrigin.value = {
+      x: -(x - (props.boardDimensions.x * scale.value) / 2),
+      y: -(y - (props.boardDimensions.y * scale.value) / 2),
     };
 
     emit("setPos", {
@@ -210,45 +205,38 @@ onUpdated(() => {
     @mousemove="mousePan"
   >
     <div
+      class="h-full w-full"
       :style="{
-        translate: `${cssPan.x}px ${cssPan.y}px`,
+        transform: `scale(${scale})`,
+        translate: `${transformOrigin.x}px ${transformOrigin.y}px`,
         height: `${props.boardDimensions.y}px`,
         width: `${props.boardDimensions.x}px`,
       }"
-      ref="panWrapper"
+      ref="scaleWrapper"
+      @wheel="zoomEvent"
       @click="focusPixelOnClick"
-      @keydown="keyPan"
+      @keyDown="keyPan"
       @keyup="releaseKey"
     >
       <div
-        class="h-full w-full"
+        v-if="scale >= 1"
+        class="absolute top-0 left-0"
         :style="{
+          height: `${scale}px`,
+          width: `${scale}px`,
           transform: `scale(${scale})`,
-          translate: `${transformOrigin.x}px ${transformOrigin.y}px`,
+          translate: `${targetPos.x}px ${targetPos.y}px`,
+          backgroundColor: `${rgbaColor}`,
         }"
-        ref="scaleWrapper"
-        @wheel="zoomEvent"
-      >
-        <div
-          v-if="scale >= 1"
-          class="absolute top-0 left-0"
-          :style="{
-            height: `${scale}px`,
-            width: `${scale}px`,
-            transform: `scale(${scale})`,
-            translate: `${targetPos.x}px ${targetPos.y}px`,
-            backgroundColor: `${rgbaColor}`,
-          }"
-        ></div>
-        <canvas
-          tabindex="0"
-          class=""
-          ref="canvas"
-          id="canvas"
-          :height="props.boardDimensions.x"
-          :width="props.boardDimensions.y"
-        ></canvas>
-      </div>
+      ></div>
+      <canvas
+        tabindex="0"
+        class=""
+        ref="canvas"
+        id="canvas"
+        :height="props.boardDimensions.x"
+        :width="props.boardDimensions.y"
+      ></canvas>
     </div>
   </div>
 </template>

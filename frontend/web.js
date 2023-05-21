@@ -1,7 +1,5 @@
-module.exports = {
-  resolve: {
-    alias: {
-      "@": "src",
-    },
+export const resolve = {
+  alias: {
+    "@": "src",
   },
 };
