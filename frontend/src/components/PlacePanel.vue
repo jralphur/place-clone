@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { htmlColors, type PlaceColorName, colors } from "../types";
-import { fromInt32 } from "../types/RGBA";
 import { getBackgroundColorCSS } from "../utils/rgba";
 const props = defineProps<{
   rgbaColor: string;
