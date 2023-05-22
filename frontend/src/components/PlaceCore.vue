@@ -82,11 +82,7 @@ const handleRegister = async (register: RegisterFormRequestData) => {
   displayLogin.value = false;
 };
 
-const placePixel = async (e: MouseEvent) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  console.log("Placing tile at ", targetPos.value);
+const placePixel = async () => {
   // if (targetPos.value !== null) {
   //   await putTile({ point: targetPos.value, color: activeColor.value });
   // }
@@ -132,25 +128,13 @@ const setTargetPos = (point: Point) => {
           @set-pos="setTargetPos"
         />
       </div>
-      <div
-        class="absolute w-11/12 flex flex-col justify-center items-center bottom-4 inset-x-0 ml-auto mr-auto pointer-events-auto"
-      >
-        <div
-          class="bg-slate-300 flex items-center mb-4 p-2 shadow-lg rounded-lg"
-        >
-          <div
-            class="w-4 h-4 mr-2"
-            :style="{
-              backgroundColor: getBackgroundColorCSS(htmlColors[activeColor]),
-            }"
-          ></div>
-          <button @click="placePixel" class="items-center">Place</button>
-        </div>
-        <div class="w-full bg-slate-300 px-2 rounded-lg shadow-lg">
-          <PlacePanel @setcolor="setActiveColor" :rgba-color="rgbaColor" />
-          <!-- <div>{{ targetPos.x }} {{ targetPos.y }}</div> -->
-        </div>
-      </div>
+      <PlacePanel
+        @setcolor="setActiveColor"
+        @placepixel="placePixel"
+        :activeColor="activeColor"
+        :rgba-color="rgbaColor"
+      />
+      <!-- <div>{{ targetPos.x }} {{ targetPos.y }}</div> -->
     </div>
   </div>
   <div v-else>Not loaded</div>

@@ -54,12 +54,14 @@ const scaleView = (focusX: number, focusY: number, target: number) => {
   const delta = zoom - scale.value;
 
   if (delta != 0) {
+    // calculate the offset needed
     const offsetX = -(x * delta);
     const offsetY = -(y * delta);
 
-    transformOrigin.value.x += offsetX;
-    transformOrigin.value.y += offsetY;
+    cssPan.value.x += offsetX;
+    cssPan.value.y += offsetY;
 
+    // scale the board
     scale.value += delta;
   }
 };
@@ -163,25 +165,25 @@ const focusPixelOnClick = (event: MouseEvent) => {
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    cssPan.value = {
-      x: x - (props.boardDimensions.x * scale.value) / 2,
-      y: y - (props.boardDimensions.y * scale.value) / 2,
-    };
+    console.log("clicked on", x, y);
+    // cssPan.value = {
+    //   x: x - (props.boardDimensions.x * scale.value) / 2,
+    //   y: y - (props.boardDimensions.y * scale.value) / 2,
+    // };
 
     emit("setPos", {
       x: Math.floor(x * (1 / scale.value)),
       y: Math.floor(y * (1 / scale.value)),
     });
 
-    if (scale.value < 1) {
-      scaleView(x, y, 1.0);
-    }
+    // if (scale.value < 1) {
+    //   scaleView(x, y, 1.0);
+    // }
   }
 };
 
 const draw = () => {
   if (canvas.value !== null) {
-    console.log("draw");
     const context = canvas.value.getContext("2d") as CanvasRenderingContext2D;
     context.putImageData(props.place.board, 0, 0);
   }
@@ -227,7 +229,7 @@ onUpdated(() => {
         class="h-full w-full"
         :style="{
           transform: `scale(${scale})`,
-          translate: `${transformOrigin.x}px ${transformOrigin.y}px`,
+          // translate: `${transformOrigin.x}px ${transformOrigin.y}px`,
         }"
         ref="scaleWrapper"
         @wheel="zoomEvent"
