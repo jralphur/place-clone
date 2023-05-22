@@ -26,30 +26,30 @@ const placePixel = (e: MouseEvent) => {
 </script>
 
 <template>
+  <!-- Submit button -->
   <div
-    class="absolute w-11/12 flex flex-col justify-center items-center bottom-4 inset-x-0 m-auto pointer-events-auto"
+    class="w-fit flex items-center absolute bottom-20 inset-x-0 m-auto mb-4 p-2 pointer-events-auto bg-slate-300 shadow-lg rounded-lg"
   >
-    <div class="bg-slate-300 flex items-center mb-4 p-2 shadow-lg rounded-lg">
-      <div
-        class="w-4 h-4 mr-2"
-        :style="{
-          backgroundColor: getBackgroundColorCSS(htmlColors[activeColor]),
-        }"
-      ></div>
-      <button @click="placePixel" class="items-center">Place</button>
-    </div>
-
     <div
-      class="flex space-x-2 h-12 w-full bg-slate-300 px-2 rounded-lg shadow-lg"
-    >
-      <button
-        v-for="color in colors"
-        @click="(e) => changeColor(e, color)"
-        :key="color"
-        class="grow h-8 w-1/12 rounded-md border-black box-border"
-        :style="{ backgroundColor: getBackgroundColorCSS(htmlColors[color]) }"
-        :class="{ 'border-2': props.rgbaColor === color }"
-      ></button>
-    </div>
+      class="w-4 h-4 mr-2"
+      :style="{
+        backgroundColor: getBackgroundColorCSS(htmlColors[activeColor]),
+      }"
+    ></div>
+    <button @click="placePixel" class="items-center">Place</button>
+  </div>
+
+  <!-- Color picker -->
+  <div
+    class="w-11/12 flex items-center absolute inset-x-0 bottom-8 m-auto space-x-2 h-12 bg-slate-300 px-2 rounded-lg shadow-lg"
+  >
+    <button
+      v-for="color in colors"
+      @click="(e) => changeColor(e, color)"
+      :key="color"
+      class="grow h-8 w-1/12 rounded-md border-black box-border"
+      :style="{ backgroundColor: getBackgroundColorCSS(htmlColors[color]) }"
+      :class="{ 'border-2': props.rgbaColor === color }"
+    ></button>
   </div>
 </template>
