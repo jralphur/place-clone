@@ -20,16 +20,13 @@ const cssPan = ref<Point>({
   y: 0,
 });
 
-const scale = ref(0.75);
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 40;
+const scale = ref(MIN_ZOOM);
 const wrapper = ref<InstanceType<typeof HTMLDivElement> | null>(null);
 const scaleWrapper = ref<InstanceType<typeof HTMLDivElement> | null>(null);
 const panWrapper = ref<InstanceType<typeof HTMLDivElement> | null>(null);
 const canvas = ref<InstanceType<typeof HTMLCanvasElement> | null>(null);
-
-const transformOrigin = ref<Point>({
-  x: 0,
-  y: 0,
-});
 
 const clamp = (min: number, max: number, value: number): number => {
   if (value < min) {
@@ -47,23 +44,29 @@ const magnitude = (vec: { x: number; y: number }) => {
   return Math.sqrt(vec.x * vec.x + vec.y * vec.y);
 };
 
-const scaleView = (focusX: number, focusY: number, target: number) => {
-  const x = focusX - (props.boardDimensions.x * scale.value) / 2;
-  const y = focusY - (props.boardDimensions.y * scale.value) / 2;
-  const zoom = clamp(0.75, 2.0, target);
+const scaleView = (target: number) => {
+  const zoom = clamp(MIN_ZOOM, MAX_ZOOM, target);
   const delta = zoom - scale.value;
 
   if (delta != 0) {
     // calculate the offset needed
-    const offsetX = -(x * delta);
-    const offsetY = -(y * delta);
+    // const offsetX = -(x * delta);
+    // const offsetY = -(y * delta);
 
-    cssPan.value.x += offsetX;
-    cssPan.value.y += offsetY;
+    // cssPan.value.x += offsetX;
+    // cssPan.value.y += offsetY;
 
     // scale the board
-    scale.value += delta;
+    scale.value = target;
+    panView(props.targetPos.x, props.targetPos.y);
   }
+};
+
+const panView = (x: number, y: number) => {
+  cssPan.value = {
+    x: (props.boardDimensions.x * scale.value) / 2 - x * scale.value,
+    y: (props.boardDimensions.y * scale.value) / 2 - y * scale.value,
+  };
 };
 
 const zoomEvent = (event: WheelEvent) => {
@@ -82,10 +85,11 @@ const zoomEvent = (event: WheelEvent) => {
 
   // center of canvas is the origin point, so
   // we'll need to translate the origin math from the top left to center
-  const x = event.clientX - scaleWrapper.value.offsetLeft;
-  const y = event.clientY - scaleWrapper.value.offsetTop;
+  // const x = event.clientX - scaleWrapper.value.offsetLeft;
+  // const y = event.clientY - scaleWrapper.value.offsetTop;
   const sign = event.deltaY < 0 ? 1 : -1;
-  scaleView(x, y, sign * 0.25 + scale.value);
+  const step = 0.2;
+  scaleView(scale.value + sign * step);
 };
 
 // because of the flex rules placing the canvas at the center, we'll call the origin
@@ -156,6 +160,7 @@ const clickUp = () => {
 };
 
 // center point is origin
+
 const focusPixelOnClick = (event: MouseEvent) => {
   if (
     event.target &&
@@ -165,20 +170,20 @@ const focusPixelOnClick = (event: MouseEvent) => {
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    console.log("clicked on", x, y);
-    // cssPan.value = {
-    //   x: x - (props.boardDimensions.x * scale.value) / 2,
-    //   y: y - (props.boardDimensions.y * scale.value) / 2,
-    // };
-
+    /*
+     * targetPos: ((width / 2) - x, (height / 2) - y))
+     */
+    // select pixel
     emit("setPos", {
-      x: Math.floor(x * (1 / scale.value)),
-      y: Math.floor(y * (1 / scale.value)),
+      x: Math.floor(x / scale.value),
+      y: Math.floor(y / scale.value),
     });
 
-    // if (scale.value < 1) {
-    //   scaleView(x, y, 1.0);
-    // }
+    if (scale.value < 2) {
+      scaleView(2.0);
+    }
+
+    panView(x, y);
   }
 };
 
@@ -204,11 +209,12 @@ onUpdated(() => {
   draw();
 });
 </script>
+
 <template>
   <div
     id="classwrapper"
     ref="wrapper"
-    class="flex items-center justify-center"
+    class="h-full w-full flex items-center justify-center"
     @mousedown="clickDown"
     @mouseup="clickUp"
     @mouseleave="clickUp"

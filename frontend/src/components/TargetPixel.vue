@@ -9,11 +9,9 @@ const props = defineProps<{
 </script>
 <template>
   <div
-    class="absolute top-0 left-0"
+    id="targetPixel"
+    class="absolute h-px w-px z-20"
     :style="{
-      height: `1px`,
-      width: `1px`,
-      transform: `scale(${props.scale})`,
       translate: `${props.translate.x}px ${props.translate.y}px`,
       backgroundColor: `${props.rgbaColor}`,
     }"

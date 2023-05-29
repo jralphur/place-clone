@@ -119,22 +119,20 @@ const setTargetPos = (point: Point) => {
       Login
     </div>
     <div class="bg-slate-300 overflow-clip h-screen w-screen">
-      <div class="absolute inset-0">
-        <PlaceDisplay
-          :board-dimensions="{ x: place.width(), y: place.height() }"
-          :rgba-color="rgbaColor"
-          :target-pos="targetPos"
-          :place="place"
-          @set-pos="setTargetPos"
-        />
-      </div>
+      <PlaceDisplay
+        :board-dimensions="{ x: place.width(), y: place.height() }"
+        :rgba-color="rgbaColor"
+        :target-pos="targetPos"
+        :place="place"
+        @set-pos="setTargetPos"
+      />
       <PlacePanel
         @setcolor="setActiveColor"
         @placepixel="placePixel"
         :activeColor="activeColor"
         :rgba-color="rgbaColor"
       />
-      <!-- <div>{{ targetPos.x }} {{ targetPos.y }}</div> -->
+      <div class="absolute top-2 left-2">{{ targetPos.x }} {{ targetPos.y }}</div>
     </div>
   </div>
   <div v-else>Not loaded</div>
