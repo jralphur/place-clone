@@ -8,4 +8,4 @@ Backend: Express + Node + TypeScript
 
 Other technologies
 
-Redis, JSONWebToken
+Redis to hold login timers and the memory of the board. JSONWebToken for authentication
